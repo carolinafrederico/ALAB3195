@@ -1,34 +1,65 @@
 import express from "express";
 import db from "../db/conn.mjs";
 import { ObjectId } from "mongodb";
+import mongoose from "mongoose";
+
 
 const router = express.Router();
 
+
+
+
 // Create a single grade entry
+
 router.post("/", async (req, res) => {
-  let collection = await db.collection("grades");
-  let newDocument = req.body;
+  try {
+    let newGrade = req.body;
 
-  // rename fields for backwards compatibility
-  if (newDocument.student_id) {
-    newDocument.learner_id = newDocument.student_id;
-    delete newDocument.student_id;
+    if (newGrade.student_id) {
+      newGrade.learner_id = newGrade.student_id;
+      delete newGrade.student_id;
+    }
+
+    const result = await Grade.create(newGrade);
+    res.status(201).send(result);
+  } catch (err) {
+    res.status(500).send(err.message);
   }
-
-  let result = await collection.insertOne(newDocument);
-  res.send(result).status(204);
 });
+
+// router.post("/", async (req, res) => {
+//   let collection = await db.collection("grades");
+//   let newDocument = req.body;
+
+//   // rename fields for backwards compatibility
+//   if (newDocument.student_id) {
+//     newDocument.learner_id = newDocument.student_id;
+//     delete newDocument.student_id;
+//   }
+
+//   let result = await collection.insertOne(newDocument);
+//   res.send(result).status(204);
+// });
 
 // Get a single grade entry
-router.get("/:id", async (req, res) => {
-  let collection = await db.collection("grades");
-  let query = { _id: ObjectId(req.params.id) };
-  let result = await collection.findOne(query);
+// router.get("/:id", async (req, res) => {
+//   let collection = await db.collection("grades");
+//   let query = { _id: ObjectId(req.params.id) };
+//   let result = await collection.findOne(query);
 
-  if (!result) res.send("Not found").status(404);
-  else res.send(result).status(200);
+//   if (!result) res.send("Not found").status(404);
+//   else res.send(result).status(200);
+// });
+
+router.get("/", async (req, res) => {
+  try {
+    const grades = await Grade.find();
+    // const pokemon = await Pokemon.find()
+    res.json(grades)
+  } catch(error) {
+    console.error(error);
+  }
 });
-
 // Add a score to a grade entry
 router.patch("/:id/add", async (req, res) => {
   let collection = await db.collection("grades");
